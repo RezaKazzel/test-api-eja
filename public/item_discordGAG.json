@@ -1,0 +1,65 @@
+[
+  {
+    "SeedStock": [
+      { "id": "1376689773594411115", "title": "Carrot" },
+      { "id": "1376689773594411114", "title": "Strawberry" },
+      { "id": "1376689773594411113", "title": "Blueberry" },
+      { "id": "1391304471161606244", "title": "Orange Tulip" },
+      { "id": "1376689773594411111", "title": "Tomato" },
+      { "id": "1393556992488116235", "title": "Corn" },
+      { "id": "1376689773540016198", "title": "Daffodil" },
+      { "id": "1376689773540016197", "title": "Watermelon" },
+      { "id": "1391304781926105168", "title": "Pumpkin " },
+      { "id": "1391304857138499584", "title": "Apple" },
+      { "id": "1391304896464289873", "title": "Bamboo" },
+      { "id": "1391304904013774908", "title": "Coconut" },
+      { "id": "1391305026911076502", "title": "Cactus" },
+      { "id": "1391305063657504888", "title": "Dragon Fruit" },
+      { "id": "1391305066086010963", "title": "Mango" },
+      { "id": "1391305301785051227", "title": "Grape" },
+      { "id": "1391305305911984179", "title": "Mushroom" },
+      { "id": "1391305367774040134", "title": "Pepper" },
+      { "id": "1391305424925491240", "title": "Cacao" },
+      { "id": "1391305459541086218", "title": "Beanstalk" },
+      { "id": "1391305495473553481", "title": "Ember Lily" },
+      { "id": "1383743012420718673", "title": "Sugar Apple" },
+      { "id": "1391305556337098843", "title": "Burning Bud" },
+      { "id": "1393793661183201320", "title": "Giant Pinecone" }
+    ]
+  },
+  {
+    "GearStock": [
+      { "id": "1376689773426507806", "title": "Watering Can" },
+      { "id": "1376689773426507805", "title": "Trowel" },
+      { "id": "1376689773426507804", "title": "Recall Wrench" },
+      { "id": "1376689773426507803", "title": "Basic Sprinkler" },
+      { "id": "1376689773426507802", "title": "Advanced Sprinkler" },
+      { "id": "1376689773426507801", "title": "Godly Sprinkler" },
+      { "id": "1376689773426507800", "title": "Lightning Rod" },
+      { "id": "1376689773426507799", "title": "Master Sprinkler" },
+      { "id": "1376689773426507798", "title": "Favourite Tool" },
+      { "id": "1379610291800768512", "title": "Harvest Tool" },
+      { "id": "1383919449740152852", "title": "Cleaning Spray" },
+      { "id": "1385994496759697468", "title": "Tanning Mirror" },
+      { "id": "1388825852480983091", "title": "Magnifying Glass" },
+      { "id": "1389770517711687813", "title": "Friendship Pot" },
+      { "id": "1394626257689510000", "title": "Medium Toy" },
+      { "id": "1394626266379849802", "title": "Medium Treat" },
+      { "id": "1394626266807668766", "title": "Levelup Lollipop" }
+    ]
+  },
+  {
+    "EggStock": [
+      { "id": "1376689773460066323", "title": "Common Egg" },
+      { "id": "1376689773460066322", "title": "Uncommon Egg" },
+      { "id": "1376689773460066321", "title": "Rare Egg" },
+      { "id": "1376689773460066319", "title": "Bug Egg" },
+      { "id": "1376689773460066318", "title": "Mythical Egg" },
+      { "id": "1376689773460066320", "title": "Legendary Egg" },
+      { "id": "1385994398260658216", "title": "Common Summer Egg" },
+      { "id": "1385994437846372502", "title": "Rare Summer Egg" },
+      { "id": "1385994461179281519", "title": "Paradise Egg" },
+      { "id": "1388825851617087518", "title": "Bee Egg" }
+    ]
+  }
+]
