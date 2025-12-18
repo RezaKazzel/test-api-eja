@@ -1,38 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { encrypt, decrypt } from '../../lib/crypto'; 
 
-function streakToTime(streak: number): string {
-  const totalSeconds = streak * 210; // 1 streak = 3m30s = 210s
-
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  const parts: string[] = [];
-  if (days > 0) parts.push(`${days} Hari`);
-  if (hours > 0) parts.push(`${hours} Jam`);
-  if (minutes > 0) parts.push(`${minutes} Menit`);
-  if (seconds > 0) parts.push(`${seconds} Detik`);
-
-  return parts.join(" ");
+export async function GET() {
+  return NextResponse.json({ 
+    status: "Online", 
+    message: "Endpoint enkripsi aktif. Silakan gunakan metode POST." 
+  });
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const streakParam = searchParams.get("streak");
+export async function POST(req: Request) {
+  try {
+    // 1. Ambil data dari body request
+    const body = await req.json();
+    const { text, password, action } = body;
 
-  if (streakParam === null) {
-    return NextResponse.json({ error: "Missing 'streak' parameter" }, { status: 400 });
+    // 2. Validasi input
+    if (!text || !password || !action) {
+      return NextResponse.json({ 
+        error: "Missing fields", 
+        details: "text, password, dan action wajib diisi." 
+      }, { status: 400 });
+    }
+
+    // 3. Proses berdasarkan action (encode atau decode)
+    let result = "";
+    if (action === 'encode') {
+      result = encrypt(text, password);
+    } else if (action === 'decode') {
+      result = decrypt(text, password);
+    } else {
+      return NextResponse.json({ error: "Action harus 'encode' atau 'decode'" }, { status: 400 });
+    }
+
+    // 4. Kirim hasil
+    return NextResponse.json({ 
+      success: true,
+      action: action,
+      result: result 
+    });
+
+  } catch (err: any) {
+    console.error("Encryption Error:", err.message);
+    return NextResponse.json({ 
+      error: "Internal Server Error", 
+      details: err.message 
+    }, { status: 500 });
   }
-
-  const streakCount = parseInt(streakParam, 10);
-  if (isNaN(streakCount) || streakCount < 0) {
-    return NextResponse.json(
-      { error: "'streak' must be a non-negative integer" },
-      { status: 400 }
-    );
-  }
-
-  const result = streakToTime(streakCount);
-  return NextResponse.json({ streak: streakCount, time: result });
 }
+
+// Memastikan route selalu diproses fresh (tidak di-cache oleh Vercel)
+export const dynamic = 'force-dynamic';
