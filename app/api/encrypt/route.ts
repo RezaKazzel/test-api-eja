@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { encrypt, decrypt } from '../../lib/crypto'; 
+const maxAmount = 25;
 
 export async function GET() {
-  const maxAmount = 10; // Sesuaikan dengan variabel max kamu
-
   return NextResponse.json({
     status: "Online",
     endpoint: "/api/encrypt",
@@ -55,7 +54,6 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const max = 25;
     
     const { text, password, action } = body;
     const amount = parseInt(body.amount) || 1;
@@ -67,7 +65,7 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    if (amount < 1 || amount > max) {
+    if (amount < 1 || amount > maxAmount) {
       return NextResponse.json({ 
         error: "Invalid amount", 
         details: `Amount harus antara 1 sampai ${max}.`
