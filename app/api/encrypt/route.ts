@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     if (amount < 1 || amount > maxAmount) {
       return NextResponse.json({ 
         error: "Invalid amount", 
-        details: `Amount harus antara 1 sampai ${max}.`
+        details: `Amount harus antara 1 sampai ${maxAmount}.`
       }, { status: 400 });
     }
 
