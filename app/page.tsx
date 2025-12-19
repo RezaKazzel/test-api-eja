@@ -1,81 +1,60 @@
 "use client";
-import { useState } from "react";
+import Link from "next/link";
 
-export default function EncryptPage() {
-  const [text, setText] = useState("");
-  const [password, setPassword] = useState("");
-  const [result, setResult] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleAction = async (action: "encode" | "decode") => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/encrypt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, password, action }),
-      });
-      const data = await res.json();
-      setResult(data.result || data.error);
-    } catch (err) {
-      setResult("Terjadi kesalahan koneksi");
+export default function HomePage() {
+  const apiList = [
+    {
+      name: "Crypto Tool UI",
+      description: "Halaman antarmuka untuk enkripsi dan dekripsi teks secara visual.",
+      path: "/encrypt",
+      type: "UI",
+      color: "bg-blue-600"
+    },
+    {
+      name: "Encryption API",
+      description: "Dokumentasi endpoint API untuk integrasi pihak ketiga.",
+      path: "/api/encrypt",
+      type: "JSON",
+      color: "bg-purple-600"
     }
-    setLoading(false);
-  };
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-8">
-      <h1 className="text-3xl font-bold mb-8 text-blue-400">Eja Crypto Tool</h1>
-      
-      <div className="w-full max-w-md bg-gray-800 p-6 rounded-xl shadow-lg space-y-4">
-        <textarea
-          placeholder="Masukkan teks di sini..."
-          className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
-          rows={4}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        
-        <input
-          type="password"
-          placeholder="Password / Kunci"
-          className="w-full p-3 bg-gray-700 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
+      <h1 className="text-4xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+        Eja API Dashboard
+      </h1>
+      <p className="text-gray-400 mb-10">Pilih layanan yang ingin kamu gunakan</p>
 
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleAction("encode")}
-            disabled={loading}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 p-3 rounded font-bold transition disabled:opacity-50"
-          >
-            Encrypt
-          </button>
-          <button
-            onClick={() => handleAction("decode")}
-            disabled={loading}
-            className="flex-1 bg-green-600 hover:bg-green-700 p-3 rounded font-bold transition disabled:opacity-50"
-          >
-            Decrypt
-          </button>
-        </div>
-
-        {result && (
-          <div className="mt-6">
-            <label className="text-sm text-gray-400">Hasil:</label>
-            <div className="p-3 bg-black rounded border border-gray-700 break-all">
-              {result}
+      <div className="grid gap-6 w-full max-w-2xl">
+        {apiList.map((api, index) => (
+          <Link key={index} href={api.path}>
+            <div className="group bg-gray-800 border border-gray-700 p-6 rounded-2xl hover:border-blue-500 transition-all cursor-pointer shadow-lg hover:shadow-blue-900/20">
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="text-xl font-bold group-hover:text-blue-400 transition-colors">
+                  {api.name}
+                </h2>
+                <span className={`${api.color} text-[10px] px-2 py-1 rounded-full font-bold uppercase`}>
+                  {api.type}
+                </span>
+              </div>
+              <p className="text-gray-400 text-sm">
+                {api.description}
+              </p>
+              <div className="mt-4 flex items-center text-xs text-blue-500 font-semibold group-hover:translate-x-1 transition-transform">
+                Buka Layanan 
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
             </div>
-            <button 
-              onClick={() => navigator.clipboard.writeText(result)}
-              className="text-xs text-blue-400 mt-2 hover:underline"
-            >
-              Salin ke Clipboard
-            </button>
-          </div>
-        )}
+          </Link>
+        ))}
       </div>
+
+      <footer className="mt-20 text-gray-600 text-xs">
+        &copy; {new Date().getFullYear()} Eja Digital Service. All rights reserved.
+      </footer>
     </div>
   );
 }
