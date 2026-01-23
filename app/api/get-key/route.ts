@@ -36,16 +36,38 @@ export async function POST(req: Request) {
     }
 
     if (action === 'decode') {
+      if (typeof result !== 'string' || result.length !== 23) {
+        return NextResponse.json({
+          error: 'Invalid Key'
+        }, { status: 422 });
+      }
+
+      const tsPart = result.slice(-10);
+      if (!/^\d{10}$/.test(tsPart)) {
+        return NextResponse.json({
+          error: 'Invalid Key'
+        }, { status: 422 });
+      }
+
+      const keyTimestamp = parseInt(tsPart, 10);
+      const now = Math.floor(Date.now() / 1000);
+
+      if (keyTimestamp < now) {
+        return NextResponse.json({
+          error: 'Invalid Key'
+        }, { status: 422 });
+      }
+
       for (let i = 0; i < FIXED_AMOUNT; i++) {
         try {
           result = decrypt(result, API_PASSWORD);
         } catch {
           return NextResponse.json({
-            error: 'Decryption failed',
-            details: `gagal di putaran ${i + 1}`
+            error: 'Invalid Key'
           }, { status: 422 });
         }
       }
+
       if (result.startsWith(RAW_PREFIX)) {
         result = result.slice(RAW_PREFIX.length);
         for (let i = 0; i < FIXED_AMOUNT; i++) {
@@ -57,7 +79,7 @@ export async function POST(req: Request) {
           result
         });
       }
-      
+
       return NextResponse.json({
         success: true,
         stage: 'decoded',
