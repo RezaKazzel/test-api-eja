@@ -1,47 +1,31 @@
 import { NextResponse } from 'next/server';
 import { encrypt, decrypt } from '../../lib/crypto';
 
-const maxAmount = 25;
+const API_PASSWORD = "VeRaA";
+const FIXED_AMOUNT = 1;
 const RAW_PREFIX = 'raw_';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const { text, action, raw = false } = body;
 
-    const {
-      text,
-      password,
-      action,
-      amount = 1,
-      raw = false
-    } = body;
-
-    if (!text || !password || !action) {
+    if (!text || !action) {
       return NextResponse.json({
         error: 'Missing fields',
-        details: 'text, password, action wajib diisi'
-      }, { status: 400 });
-    }
-
-    if (amount < 1 || amount > maxAmount) {
-      return NextResponse.json({
-        error: 'Invalid amount',
-        details: `amount harus 1 - ${maxAmount}`
+        details: 'text dan action wajib diisi'
       }, { status: 400 });
     }
 
     let result = text;
 
-    // =====================
-    // ENCODE
-    // =====================
     if (action === 'encode') {
       if (raw === true) {
         result = RAW_PREFIX + result;
       }
 
-      for (let i = 0; i < amount; i++) {
-        result = encrypt(result, password);
+      for (let i = 0; i < FIXED_AMOUNT; i++) {
+        result = encrypt(result, API_PASSWORD);
       }
 
       return NextResponse.json({
@@ -51,13 +35,10 @@ export async function POST(req: Request) {
       });
     }
 
-    // =====================
-    // DECODE
-    // =====================
     if (action === 'decode') {
-      for (let i = 0; i < amount; i++) {
+      for (let i = 0; i < FIXED_AMOUNT; i++) {
         try {
-          result = decrypt(result, password);
+          result = decrypt(result, API_PASSWORD);
         } catch {
           return NextResponse.json({
             error: 'Decryption failed',
@@ -73,12 +54,10 @@ export async function POST(req: Request) {
         }, { status: 400 });
       }
 
-      // hapus raw_
       result = result.slice(RAW_PREFIX.length);
 
-      // encrypt ulang biar aman dikirim balik
-      for (let i = 0; i < amount; i++) {
-        result = encrypt(result, password);
+      for (let i = 0; i < FIXED_AMOUNT; i++) {
+        result = encrypt(result, API_PASSWORD);
       }
 
       return NextResponse.json({
@@ -94,7 +73,6 @@ export async function POST(req: Request) {
     }, { status: 400 });
 
   } catch (err: any) {
-    console.error('GET-KEY ERROR:', err.message);
     return NextResponse.json({
       error: 'Internal server error',
       details: err.message
