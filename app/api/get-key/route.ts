@@ -46,18 +46,21 @@ export async function POST(req: Request) {
           }, { status: 422 });
         }
       }
-
       if (result.startsWith(RAW_PREFIX)) {
         result = result.slice(RAW_PREFIX.length);
+        for (let i = 0; i < FIXED_AMOUNT; i++) {
+          result = encrypt(result, API_PASSWORD);
+        }
+        return NextResponse.json({
+          success: true,
+          stage: 'raw-decoded-clean-reencrypted',
+          result
+        });
       }
-
-      for (let i = 0; i < FIXED_AMOUNT; i++) {
-        result = encrypt(result, API_PASSWORD);
-      }
-
+      
       return NextResponse.json({
         success: true,
-        stage: 'decoded-clean-reencrypted',
+        stage: 'decoded',
         result
       });
     }
