@@ -47,14 +47,9 @@ export async function POST(req: Request) {
         }
       }
 
-      if (!result.startsWith(RAW_PREFIX)) {
-        return NextResponse.json({
-          error: 'Invalid raw key',
-          details: 'prefix raw_ tidak ditemukan'
-        }, { status: 400 });
+      if (result.startsWith(RAW_PREFIX)) {
+        result = result.slice(RAW_PREFIX.length);
       }
-
-      result = result.slice(RAW_PREFIX.length);
 
       for (let i = 0; i < FIXED_AMOUNT; i++) {
         result = encrypt(result, API_PASSWORD);
