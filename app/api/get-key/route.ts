@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
       // HARUS 22 = 12 HWID + 10 TIMESTAMP
       if (result.length !== 22) {
-        return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
+        return NextResponse.json({ error: 'Invalid Key Length' }, { status: 422 });
       }
 
       const hwidPart = result.slice(0, 12);
@@ -61,19 +61,19 @@ export async function POST(req: Request) {
 
       // validasi hwid tail
       if (!/^[a-f0-9]{12}$/i.test(hwidPart)) {
-        return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
+        return NextResponse.json({ error: 'Invalid HWID' }, { status: 422 });
       }
 
       // validasi timestamp
       if (!/^\d{10}$/.test(tsPart)) {
-        return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
+        return NextResponse.json({ error: 'Invalid TimeStamp' }, { status: 422 });
       }
 
       const keyTimestamp = parseInt(tsPart, 10);
       const now = Math.floor(Date.now() / 1000);
 
       if (keyTimestamp < now) {
-        return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
+        return NextResponse.json({ error: 'Key Expired' }, { status: 422 });
       }
 
       // re-encrypt kalau raw=true
