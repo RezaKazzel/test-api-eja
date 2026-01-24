@@ -19,6 +19,7 @@ export async function POST(req: Request) {
 
     let result = text;
 
+    // ================= ENCODE =================
     if (action === 'encode') {
       if (raw === true) {
         result = RAW_PREFIX + result;
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
       });
     }
 
+    // ================= DECODE =================
     if (action === 'decode') {
       for (let i = 0; i < FIXED_AMOUNT; i++) {
         try {
@@ -44,15 +46,25 @@ export async function POST(req: Request) {
         }
       }
 
+      // potong raw_
       if (result.startsWith(RAW_PREFIX)) {
         result = result.slice(RAW_PREFIX.length);
       }
 
-      if (result.length !== 23) {
+      // HARUS 22 = 12 HWID + 10 TIMESTAMP
+      if (result.length !== 22) {
         return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
       }
 
-      const tsPart = result.slice(-10);
+      const hwidPart = result.slice(0, 12);
+      const tsPart   = result.slice(12);
+
+      // validasi hwid tail
+      if (!/^[a-f0-9]{12}$/i.test(hwidPart)) {
+        return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
+      }
+
+      // validasi timestamp
       if (!/^\d{10}$/.test(tsPart)) {
         return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
       }
@@ -64,6 +76,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Invalid Key' }, { status: 422 });
       }
 
+      // re-encrypt kalau raw=true
       if (raw === true) {
         for (let i = 0; i < FIXED_AMOUNT; i++) {
           result = encrypt(result, API_PASSWORD);
