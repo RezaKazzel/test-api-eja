@@ -8,7 +8,7 @@ const RAW_PREFIX = 'raw_';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { text, action, raw = false } = body;
+    const { text, action, raw = false, check = true } = body;
 
     if (!text || !action) {
       return NextResponse.json(
@@ -72,12 +72,12 @@ export async function POST(req: Request) {
       const keyTimestamp = parseInt(tsPart, 10);
       const now = Math.floor(Date.now() / 1000);
 
-      if (keyTimestamp < now) {
+      if (keyTimestamp < now && check) {
         return NextResponse.json({ error: 'Key Expired' }, { status: 422 });
       }
 
       // re-encrypt kalau raw=true
-      if (raw === true) {
+      if (raw) {
         for (let i = 0; i < FIXED_AMOUNT; i++) {
           result = encrypt(result, API_PASSWORD);
         }
@@ -86,7 +86,8 @@ export async function POST(req: Request) {
       return NextResponse.json({
         success: true,
         stage: 'decoded',
-        result
+        result,
+        timestamp: tsPart
       });
     }
 
