@@ -21,17 +21,21 @@ export async function POST(req: Request) {
 
     // ================= ENCODE =================
     if (action === 'encode') {
-      if (raw === true) {
+      if (raw) {
         result = RAW_PREFIX + result;
       }
 
       for (let i = 0; i < FIXED_AMOUNT; i++) {
         result = encrypt(result, API_PASSWORD);
       }
+      
+      const timestamp = text.length >= 10 ? text.slice(-10) : text;
 
       return NextResponse.json({
         success: true,
         stage: raw ? 'raw-encrypted' : 'encrypted',
+        key: text,
+        timestamp,
         result
       });
     }
@@ -53,20 +57,20 @@ export async function POST(req: Request) {
 
       // HARUS 22 = 12 HWID + 10 TIMESTAMP
       if (result.length !== 22) {
-        return NextResponse.json({ error: 'Invalid Key Length' }, { status: 422 });
+        return NextResponse.json({ error: 'Invalid Key Length', key: text}, { status: 422 });
       }
 
       const hwidPart = result.slice(0, 12);
-      const tsPart   = result.slice(12);
+      const tsPart   = result.length >= 10 ? result.slice(-10) : result;
 
       // validasi hwid tail
       if (!/^[a-f0-9]{12}$/i.test(hwidPart)) {
-        return NextResponse.json({ error: 'Invalid HWID' }, { status: 422 });
+        return NextResponse.json({ error: 'Invalid HWID', key: text}, { status: 422 });
       }
 
       // validasi timestamp
       if (!/^\d{10}$/.test(tsPart)) {
-        return NextResponse.json({ error: 'Invalid TimeStamp' }, { status: 422 });
+        return NextResponse.json({ error: 'Invalid TimeStamp', key: text}, { status: 422 });
       }
 
       const keyTimestamp = parseInt(tsPart, 10);
