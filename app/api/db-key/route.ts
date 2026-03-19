@@ -10,8 +10,6 @@ const connectionString =
 // Password untuk admin (simpan di environment variable)
 const ADMIN_PASSWORD = process.env.ADMIN_API_PASSWORD || "Verz";
 
-console.log("DB URL:", connectionString);
-
 const pool = new Pool({
   connectionString,
   ssl: { rejectUnauthorized: false },
