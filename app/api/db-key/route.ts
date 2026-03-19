@@ -7,7 +7,6 @@ const connectionString =
   process.env.cihuy_POSTGRES_URL ||
   process.env.cihuy_POSTGRES_HOST;
 
-// Password untuk admin (simpan di environment variable)
 const ADMIN_PASSWORD = process.env.ADMIN_API_PASSWORD || "Verz";
 
 const pool = new Pool({
@@ -15,15 +14,26 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-// DISABLE GET - Selalu return 404
+// DISABLE GET
 export async function GET() {
   return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
 
-// POST: Satu endpoint untuk semua fungsi
+// Helper: Auto cleanup expired keys
+async function cleanupExpiredKeys() {
+  await pool.query(`
+    UPDATE product_keys 
+    SET status = 'expired', is_expired = TRUE 
+    WHERE expires_at <= CURRENT_TIMESTAMP 
+    AND status = 'available'
+  `);
+}
+
 export async function POST(req: Request) {
   try {
-    const { key, password, product, user_id, roblox_id } = await req.json();
+    await cleanupExpiredKeys();
+    
+    const { key, password, product, valid_days } = await req.json();
 
     // Validasi: Key wajib ada
     if (!key) {
@@ -37,12 +47,12 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid password" }, { status: 401 });
       }
 
-      // Validasi: Product wajib ada untuk tambah key
+      // Validasi: Product wajib ada
       if (!product) {
-        return NextResponse.json({ error: "Product is required to add key" }, { status: 400 });
+        return NextResponse.json({ error: "Product is required" }, { status: 400 });
       }
 
-      // Cek apakah key sudah ada
+      // Cek duplikat
       const checkResult = await pool.query(
         `SELECT * FROM product_keys WHERE key_value = $1`,
         [key]
@@ -55,28 +65,34 @@ export async function POST(req: Request) {
         }, { status: 400 });
       }
 
-      // Tambah key baru
+      // Hitung expiry
+      let expiresAt = null;
+      if (valid_days) {
+        expiresAt = new Date(Date.now() + valid_days * 24 * 60 * 60 * 1000);
+      }
+
+      // Insert key
       await pool.query(
-        `INSERT INTO product_keys (product_name, key_value, status)
-         VALUES ($1, $2, 'available')`,
-        [product, key]
+        `INSERT INTO product_keys (product_name, key_value, status, expires_at)
+         VALUES ($1, $2, 'available', $3)`,
+        [product, key, expiresAt]
       );
 
       return NextResponse.json({ 
         success: true, 
-        message: "Key added successfully" 
+        message: "Key added successfully",
+        expires_at: expiresAt
       });
     }
 
     // ========== MODE 2: TANPA PASSWORD = CEK KEY ==========
     else {
-      // Cari key di database
+      // Cari key
       const result = await pool.query(
         `SELECT * FROM product_keys WHERE key_value = $1`,
         [key]
       );
 
-      // Key tidak ditemukan
       if (result.rows.length === 0) {
         return NextResponse.json({ 
           success: false, 
@@ -86,7 +102,21 @@ export async function POST(req: Request) {
 
       const keyData = result.rows[0];
       
-      // Key sudah dipakai
+      // Cek expired
+      if (keyData.expires_at && new Date(keyData.expires_at) < new Date()) {
+        await pool.query(
+          `UPDATE product_keys SET status = 'expired', is_expired = TRUE WHERE key_value = $1`,
+          [key]
+        );
+        
+        return NextResponse.json({ 
+          success: false, 
+          error: "Key expired",
+          expired_at: keyData.expires_at
+        });
+      }
+      
+      // Cek sudah dipakai
       if (keyData.status !== "available") {
         return NextResponse.json({ 
           success: false, 
@@ -95,13 +125,12 @@ export async function POST(req: Request) {
         });
       }
 
-      // Key valid dan available
-      // Update status key menjadi used
+      // Key valid, update status jadi used
       await pool.query(
         `UPDATE product_keys 
-         SET status = 'used', user_id = $1, roblox_id = $2, used_at = CURRENT_TIMESTAMP
-         WHERE key_value = $3`,
-        [user_id || null, roblox_id || null, key]
+         SET status = 'used', used_at = CURRENT_TIMESTAMP
+         WHERE key_value = $1`,
+        [key]
       );
 
       return NextResponse.json({ 
