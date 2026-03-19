@@ -19,6 +19,15 @@ export async function GET() {
   return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
 
+// Helper: Auto delete expired keys (kalau mau hapus permanent)
+async function deleteExpiredKeys() {
+  await pool.query(`
+    DELETE FROM product_keys 
+    WHERE expires_at <= CURRENT_TIMESTAMP 
+    AND status = 'expired'
+  `);
+}
+
 // Helper: Auto cleanup expired keys
 async function cleanupExpiredKeys() {
   await pool.query(`
@@ -27,6 +36,7 @@ async function cleanupExpiredKeys() {
     WHERE expires_at <= CURRENT_TIMESTAMP 
     AND status = 'active'
   `);
+  await deleteExpiredKeys();
 }
 
 export async function POST(req: Request) {
