@@ -25,7 +25,7 @@ async function cleanupExpiredKeys() {
     UPDATE product_keys 
     SET status = 'expired', is_expired = TRUE 
     WHERE expires_at <= CURRENT_TIMESTAMP 
-    AND status = 'available'
+    AND status = 'active'
   `);
 }
 
@@ -65,16 +65,15 @@ export async function POST(req: Request) {
         }, { status: 400 });
       }
 
-      // Hitung expiry
       let expiresAt = null;
       if (valid_days) {
         expiresAt = new Date(Date.now() + valid_days * 24 * 60 * 60 * 1000);
       }
 
-      // Insert key
+      // Insert key - pake status 'active' bukan 'available'
       await pool.query(
         `INSERT INTO product_keys (product_name, key_value, status, expires_at)
-         VALUES ($1, $2, 'available', $3)`,
+         VALUES ($1, $2, 'active', $3)`,
         [product, key, expiresAt]
       );
 
@@ -104,6 +103,7 @@ export async function POST(req: Request) {
       
       // Cek expired
       if (keyData.expires_at && new Date(keyData.expires_at) < new Date()) {
+        // Tandai expired di database
         await pool.query(
           `UPDATE product_keys SET status = 'expired', is_expired = TRUE WHERE key_value = $1`,
           [key]
@@ -116,27 +116,23 @@ export async function POST(req: Request) {
         });
       }
       
-      // Cek sudah dipakai
-      if (keyData.status !== "available") {
+      // Cek status (harus 'active')
+      if (keyData.status !== "active") {
         return NextResponse.json({ 
           success: false, 
-          error: "Key already used",
-          used_at: keyData.used_at
+          error: "Key is not active",
+          status: keyData.status
         });
       }
 
-      // Key valid, update status jadi used
-      await pool.query(
-        `UPDATE product_keys 
-         SET status = 'used', used_at = CURRENT_TIMESTAMP
-         WHERE key_value = $1`,
-        [key]
-      );
-
+      // KEY VALID - bisa dipakai berkali-kali
+      // Catat penggunaan (opsional, bisa ditambahkan tabel terpisah kalau perlu history)
+      
       return NextResponse.json({ 
         success: true, 
         message: "Key valid",
-        product: keyData.product_name
+        product: keyData.product_name,
+        expires_at: keyData.expires_at
       });
     }
 
