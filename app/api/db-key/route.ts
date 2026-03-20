@@ -19,7 +19,7 @@ export async function GET() {
   return NextResponse.json({ error: "Not found" }, { status: 404 });
 }
 
-// Helper: Auto delete expired keys (kalau mau hapus permanent)
+// Helper: Auto delete expired keys
 async function deleteExpiredKeys() {
   await pool.query(`
     DELETE FROM product_keys 
@@ -37,6 +37,51 @@ async function cleanupExpiredKeys() {
     AND status = 'active'
   `);
   await deleteExpiredKeys();
+}
+
+// ========== DELETE ENDPOINT ==========
+export async function DELETE(req: Request) {
+  try {
+    const { key, password } = await req.json();
+
+    // Validasi: Key wajib ada
+    if (!key) {
+      return NextResponse.json({ error: "Key is required" }, { status: 400 });
+    }
+
+    // Validasi password
+    if (!password || password !== ADMIN_PASSWORD) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+    }
+
+    // Cek apakah key ada
+    const checkResult = await pool.query(
+      `SELECT * FROM product_keys WHERE key_value = $1`,
+      [key]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Key not found" 
+      }, { status: 404 });
+    }
+
+    // Hapus key
+    await pool.query(
+      `DELETE FROM product_keys WHERE key_value = $1`,
+      [key]
+    );
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "Key deleted successfully" 
+    });
+
+  } catch (err: any) {
+    console.error("DELETE error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
@@ -80,7 +125,7 @@ export async function POST(req: Request) {
         expiresAt = new Date(Date.now() + valid_days * 24 * 60 * 60 * 1000);
       }
 
-      // Insert key - pake status 'active' bukan 'available'
+      // Insert key
       await pool.query(
         `INSERT INTO product_keys (product_name, key_value, status, expires_at)
          VALUES ($1, $2, 'active', $3)`,
@@ -113,7 +158,6 @@ export async function POST(req: Request) {
       
       // Cek expired
       if (keyData.expires_at && new Date(keyData.expires_at) < new Date()) {
-        // Tandai expired di database
         await pool.query(
           `UPDATE product_keys SET status = 'expired', is_expired = TRUE WHERE key_value = $1`,
           [key]
@@ -126,7 +170,7 @@ export async function POST(req: Request) {
         });
       }
       
-      // Cek status (harus 'active')
+      // Cek status
       if (keyData.status !== "active") {
         return NextResponse.json({ 
           success: false, 
@@ -134,9 +178,6 @@ export async function POST(req: Request) {
           status: keyData.status
         });
       }
-
-      // KEY VALID - bisa dipakai berkali-kali
-      // Catat penggunaan (opsional, bisa ditambahkan tabel terpisah kalau perlu history)
       
       return NextResponse.json({ 
         success: true, 
